@@ -16,16 +16,10 @@ const spikeDuration = 500;
 const spikeColor = '#4a90e2';
 const refractoryPeriod = 750;
 const spikePropagationDelay = 100;
-let gridSize;
-let visualRange;
-let maxSpeed;
-let minSpeed;
-let edgeMargin;
-let mouseSpikeRadius;
+let gridSize, visualRange, maxSpeed, minSpeed, edgeMargin, mouseSpikeRadius;
 
 
 function resizeCanvas() {
-
     width = window.innerWidth;
     height = window.innerHeight;
     canvas.width = width;
@@ -45,23 +39,21 @@ function resizeCanvas() {
         mouseSpikeRadius = 40;
     }
 
-
     gridSize = visualRange + 1;
 
-    if (width > 768) {
-        setBoidsCount(250);
-    } else if (width > 389) {
-        setBoidsCount(110);
-    } else {
-        setBoidsCount(50);
+    if (width < 300 || height < 450) {
+        setBoidsCount(0);
     }
-
-    updateGrid();
+    else if (width > 768) {
+        setBoidsCount(250);
+    }
+    else {
+        setBoidsCount(110);
+    }
 }
 
 function addBoids(numBoids) {
     const contentRect = content.getBoundingClientRect();
-    const margin = 50;
 
     for (let i = 0; i < numBoids; i++) {
         let x, y;
@@ -69,8 +61,8 @@ function addBoids(numBoids) {
             x = Math.random() * width;
             y = Math.random() * height;
         } while (
-            x > contentRect.left - margin && x < contentRect.right + margin &&
-            y > contentRect.top - margin && y < contentRect.bottom + margin
+            x > contentRect.left - edgeMargin && x < contentRect.right + edgeMargin &&
+            y > contentRect.top - edgeMargin && y < contentRect.bottom + edgeMargin
         );
 
         boids.push({
@@ -87,11 +79,15 @@ function addBoids(numBoids) {
 function setBoidsCount(newCount) {
     const currentCount = boids.length;
 
+    if (newCount === currentCount) return;
+
     if (newCount > currentCount) {
         addBoids(newCount - currentCount);
     } else if (newCount < currentCount) {
         boids = boids.slice(0, newCount);
     }
+
+    updateGrid();
 }
 
 function updateGrid() {
@@ -255,14 +251,15 @@ function animate(timestamp) {
     if (!lastTimestamp) {
         lastTimestamp = timestamp - 1 / 60;
     }
-
     const deltaTime = (timestamp - lastTimestamp) / 1000;
     lastTimestamp = timestamp;
 
     ctx.clearRect(0, 0, width, height);
-    boids.forEach(boid => updateBoid(boid, deltaTime));
-    boids.forEach(drawBoid);
-    updateGrid();
+    if (boids.length > 0) {
+        boids.forEach(boid => updateBoid(boid, deltaTime));
+        boids.forEach(drawBoid);
+        updateGrid();
+    }
     requestAnimationFrame(animate);
 }
 
