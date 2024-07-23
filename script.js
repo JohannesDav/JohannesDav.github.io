@@ -52,28 +52,26 @@ function resizeCanvas() {
     }
 }
 
-function addBoids(numBoids) {
+function getValidRandomBoid() {
     const contentRect = content.getBoundingClientRect();
+    let x, y;
+    do {
+        x = Math.random() * width;
+        y = Math.random() * height;
+    } while (
+        x > contentRect.left - edgeMargin && x < contentRect.right + edgeMargin &&
+        y > contentRect.top - edgeMargin && y < contentRect.bottom + edgeMargin
+    );
 
-    for (let i = 0; i < numBoids; i++) {
-        let x, y;
-        do {
-            x = Math.random() * width;
-            y = Math.random() * height;
-        } while (
-            x > contentRect.left - edgeMargin && x < contentRect.right + edgeMargin &&
-            y > contentRect.top - edgeMargin && y < contentRect.bottom + edgeMargin
-        );
+    return {
+        x: x,
+        y: y,
+        dx: Math.random() * 2 - 1,
+        dy: Math.random() * 2 - 1,
+        spiking: false,
+        lastSpikeTime: 0
+    };
 
-        boids.push({
-            x: x,
-            y: y,
-            dx: Math.random() * 2 - 1,
-            dy: Math.random() * 2 - 1,
-            spiking: false,
-            lastSpikeTime: 0
-        });
-    }
 }
 
 function setBoidsCount(newCount) {
@@ -82,7 +80,9 @@ function setBoidsCount(newCount) {
     if (newCount === currentCount) return;
 
     if (newCount > currentCount) {
-        addBoids(newCount - currentCount);
+        for (let i = 0; i < (newCount - currentCount); i++) {
+            boids.push(getValidRandomBoid());
+        }
     } else if (newCount < currentCount) {
         boids = boids.slice(0, newCount);
     }
@@ -192,6 +192,11 @@ function keepWithinBounds(boid) {
     if (boid.x > width - edgeMargin) boid.dx -= turnFactor;
     if (boid.y < edgeMargin) boid.dy += turnFactor;
     if (boid.y > height - edgeMargin) boid.dy -= turnFactor;
+
+    if (boid.x < -edgeMargin || boid.x > width + edgeMargin || boid.y < -edgeMargin || boid.y > height + edgeMargin) {
+        const index = boids.indexOf(boid);
+        boids[index] = getValidRandomBoid();
+    }
 }
 
 function updateBoid(boid, deltatime) {
